@@ -32,6 +32,55 @@ def answer_query(question):
     # SECTOR ANALYSIS
     # -------------------------------------------------
 
+    # Most deals = highest number of deals
+    if (
+        "most deals" in question
+        or "maximum deals" in question
+        or "highest number of deals" in question
+        or "most number of deals" in question
+    ):
+
+        result = pipeline_by_sector(deals)
+
+        if len(result) == 0:
+            return "No sector data is available."
+
+        top = result.sort_values(
+            "deal_count",
+            ascending=False
+        ).iloc[0]
+
+        return (
+            f"{top['sector']} has the most deals, "
+            f"with {int(top['deal_count'])} deals."
+        )
+
+    # Highest deal value by sector
+    if (
+        "highest deal value" in question
+        or "highest value sector" in question
+        or "sector with the highest value" in question
+        or "industry with the highest value" in question
+    ):
+
+        result = pipeline_by_sector(deals)
+
+        if len(result) == 0:
+            return "No sector data is available."
+
+        top = result.sort_values(
+            "pipeline_value",
+            ascending=False
+        ).iloc[0]
+
+        return (
+            f"The sector with the highest recorded deal value is "
+            f"{top['sector']}, with approximately "
+            f"₹{top['pipeline_value']:,.2f} across "
+            f"{int(top['deal_count'])} deals."
+        )
+
+    # General sector question
     if "sector" in question or "industry" in question:
 
         result = pipeline_by_sector(deals)
@@ -39,92 +88,16 @@ def answer_query(question):
         if len(result) == 0:
             return "No sector data is available."
 
-        # Most deals / highest number of deals
-        if (
-            "most deals" in question
-            or "maximum deals" in question
-            or "highest number of deals" in question
-            or "most number of deals" in question
-            or "more deals" in question
-            or "largest number of deals" in question
-        ):
-            top = result.sort_values(
-                "deal_count",
-                ascending=False
-            ).iloc[0]
-
-            return (
-                f"{top['sector']} has the most deals, "
-                f"with {int(top['deal_count'])} deals."
-            )
-
-        # Fewest deals / lowest number of deals
-        if (
-            "fewest deals" in question
-            or "least deals" in question
-            or "minimum deals" in question
-            or "lowest number of deals" in question
-            or "least number of deals" in question
-        ):
-            bottom = result.sort_values(
-                "deal_count",
-                ascending=True
-            ).iloc[0]
-
-            return (
-                f"{bottom['sector']} has the fewest deals, "
-                f"with {int(bottom['deal_count'])} deals."
-            )
-
-        # Lowest deal value
-        if (
-            "lowest deal value" in question
-            or "least deal value" in question
-            or "minimum deal value" in question
-            or "smallest deal value" in question
-        ):
-            bottom = result.sort_values(
-                "pipeline_value",
-                ascending=True
-            ).iloc[0]
-
-            return (
-                f"{bottom['sector']} has the lowest recorded "
-                f"deal value at ₹{bottom['pipeline_value']:,.2f}, "
-                f"across {int(bottom['deal_count'])} deals."
-            )
-
-        # Highest deal value
-        if (
-            "highest deal value" in question
-            or "largest deal value" in question
-            or "maximum deal value" in question
-            or "highest value" in question
-            or "largest value" in question
-        ):
-            top = result.sort_values(
-                "pipeline_value",
-                ascending=False
-            ).iloc[0]
-
-            return (
-                f"{top['sector']} currently has the highest "
-                f"recorded deal value at "
-                f"₹{top['pipeline_value']:,.2f}, "
-                f"across {int(top['deal_count'])} deals."
-            )
-
-        # Default sector question
         top = result.sort_values(
             "pipeline_value",
             ascending=False
         ).iloc[0]
 
         return (
-            f"{top['sector']} currently has the highest "
-            f"recorded deal value at "
-            f"₹{top['pipeline_value']:,.2f}, "
-            f"across {int(top['deal_count'])} deals."
+            f"The sector with the highest recorded deal value is "
+            f"{top['sector']}, with approximately "
+            f"₹{top['pipeline_value']:,.2f} across "
+            f"{int(top['deal_count'])} deals."
         )
 
     # -------------------------------------------------
@@ -138,7 +111,15 @@ def answer_query(question):
         if len(result) == 0:
             return "No stage data is available."
 
-        # Highest stage value
+        # Exclude lost deals from active stage analysis
+        result = result[
+            result["stage"].str.lower().str.strip()
+            != "l. project lost"
+        ]
+
+        if len(result) == 0:
+            return "No active stage data is available."
+
         top = result.sort_values(
             "pipeline_value",
             ascending=False
